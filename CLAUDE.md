@@ -23,3 +23,11 @@ Add an entry only when:
 
 Don't log routine exchanges. Format each entry as:
 **Proposed** → **Found** → **Decided** → **Why**
+
+## Known constraints
+
+- **Frontend: Angular.** Fixed constraint, not an open decision. Don't revisit it during design.
+
+## Git workflow
+
+Commit directly to `main` with frequent, meaningful commits. Use a separate branch only when deliberately trying an approach we already suspect we'll reject. Name it clearly (e.g. `experiment/...`) and record its existence and reason in `PROCESS.md`.

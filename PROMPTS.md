@@ -42,3 +42,12 @@ Add one more rule to CLAUDE.md: never rely on your own internal/session memory t
 ```
 Since you've already started using PROCESS.md, let's make its scope explicit in CLAUDE.md: only add an entry when you propose something I reject or modify, a test fails and you fix the logic, or an assumption you treated as fact turns out wrong and gets corrected. Don't log routine exchanges. Format each entry as: what was proposed → what was found → what was decided → why.
 ```
+
+## 2026-09-25 15:11 +02:00
+**Purpose:** Add CLAUDE.md rules fixing Angular as the frontend constraint and defining the git branching workflow.
+
+```
+Add two more rules to CLAUDE.md:
+1. Angular is a fixed constraint for the frontend - not an open architectural decision to revisit during design. State it as a known constraint.
+2. Default workflow is committing directly to main with frequent, meaningful commits. Only use a separate branch when deliberately trying an approach we already suspect we'll reject - name it clearly (e.g. experiment/...) and note its existence and reason in PROCESS.md.
+```
