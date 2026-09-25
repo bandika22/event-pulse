@@ -2,7 +2,7 @@ import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createApp } from '../src/app.js';
+import { createApp, maskValue } from '../src/app.js';
 import { createRegistry } from '../src/channels/registry.js';
 import { createEmailChannel } from '../src/channels/email.js';
 import { createSlackChannel } from '../src/channels/slack.js';
@@ -47,6 +47,13 @@ function api(cookie: string) {
   };
 }
 
+describe('masking sensitive config', () => {
+  it('never reveals any part of a short secret or a URL path', () => {
+    expect(maskValue('demo-secret')).toBe('••••••');
+    expect(maskValue('https://hooks.slack.com/services/T0/B0/abc')).toBe('https://hooks.slack.com/…');
+  });
+});
+
 describe('HTTP API end to end (in-process)', () => {
   it('rejects bad credentials and anonymous access', async () => {
     const bad = await fetch(`${base}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'alice@example.com', password: 'wrong' }) });
@@ -64,7 +71,7 @@ describe('HTTP API end to end (in-process)', () => {
     const email = await user('POST', '/api/destinations', { channelType: 'email', label: 'Work', config: { address: 'alice@example.com' } });
     const slack = await user('POST', '/api/destinations', { channelType: 'slack', config: { webhookUrl: 'http://localhost:4010/hook/alice' } });
     expect(email.status).toBe(201);
-    expect(slack.body.config.webhookUrl).toMatch(/…$/); // sensitive field masked
+    expect(slack.body.config.webhookUrl).toBe('http://localhost:4010/…'); // sensitive: origin only, no path token
 
     const tooLow = await user('POST', '/api/alerts', { name: 'x', category: 'earthquake', filters: { minMagnitude: 3 }, destinationIds: [email.body.id] });
     expect(tooLow).toMatchObject({ status: 400, body: { error: expect.stringMatching(/baseline/) } });

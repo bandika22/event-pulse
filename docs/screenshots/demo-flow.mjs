@@ -1,11 +1,11 @@
 // Reproduces docs/screenshots/*.png and checks the Phase 5 demo flow in a real browser.
 // Needs: Mailpit (docker compose up -d), Slack stub (npm run slack-stub), backend (npm start) on a FRESH database,
-// Angular dev server (npx ng serve) on :4200, and Microsoft Edge installed.
+// Angular dev server (npx ng serve) on :4200 (or set APP_URL), and Microsoft Edge installed.
 // Run from a scratch dir with `npm install playwright@1.63.0`, then: node demo-flow.mjs <output-dir>
 import { chromium } from 'playwright';
 
 const OUT = process.argv[2];
-const APP = 'http://localhost:4200';
+const APP = process.env.APP_URL ?? 'http://localhost:4200';
 const shot = (page, name) => page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true });
 const check = (cond, msg) => { if (!cond) throw new Error(`CHECK FAILED: ${msg}`); console.log(`ok - ${msg}`); };
 
@@ -39,7 +39,7 @@ async function addDestination(channel, label, fieldLabel, value) {
 await addDestination('Email', 'Inbox', 'Email address', 'alice@example.com');
 await addDestination('Slack', '#alerts (stub)', 'Incoming webhook URL', 'http://localhost:4010/hook/alerts');
 await addDestination('Slack', 'Revoked hook', 'Incoming webhook URL', 'http://localhost:4010/hook/fail-404');
-check(await page.getByText('http://localhost:4010/ho…').count() === 2, 'Slack webhook URLs are masked in the list');
+check(await page.getByText('http://localhost:4010/…').count() === 2 && await page.getByText('/hook/').count() === 0, 'Slack webhook URLs are masked to their origin in the list');
 
 // Below-baseline threshold must be rejected by the backend and shown.
 await page.getByLabel('Name').fill('Too sensitive');

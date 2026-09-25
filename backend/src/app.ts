@@ -196,9 +196,18 @@ function maskConfig(registry: ChannelRegistry, type: string, cfg: ChannelConfig)
   const fields = registry.get(type)?.configFields ?? [];
   const out: ChannelConfig = {};
   for (const [k, v] of Object.entries(cfg)) {
-    out[k] = fields.find((f) => f.name === k)?.sensitive ? `${v.slice(0, 24)}…` : v;
+    out[k] = fields.find((f) => f.name === k)?.sensitive ? maskValue(v) : v;
   }
   return out;
+}
+
+/** Shows no secret material: a URL keeps only its origin (the path holds the token), anything else is fully hidden. */
+export function maskValue(v: string): string {
+  try {
+    return `${new URL(v).origin}/…`;
+  } catch {
+    return '••••••';
+  }
 }
 
 function listAlerts(db: DB, where: string, params: unknown[]) {
