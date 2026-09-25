@@ -8,6 +8,7 @@ const APP = process.env.APP_URL ?? 'http://localhost:4200';
 const shot = (page, name) => page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true });
 const check = (cond, msg) => { if (!cond) throw new Error(`CHECK FAILED: ${msg}`); console.log(`ok - ${msg}`); };
 
+const startedAt = new Date().toISOString(); // the stub keeps messages in memory across runs; only count this run's
 const browser = await chromium.launch({ channel: 'msedge' });
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('pageerror', (e) => console.log('PAGE ERROR:', e.message));
@@ -16,6 +17,17 @@ async function login(email, password) {
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill(password);
   await page.getByRole('button', { name: 'Log in' }).click();
+}
+
+// The worker ticks every 5s by default: poll the admin API until no delivery is still pending, instead of a fixed sleep.
+async function waitForDeliveriesSettled(timeoutMs = 30_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const list = await (await page.request.get(`${APP}/api/admin/deliveries`)).json();
+    if (list.length && list.every((d) => d.status === 'sent' || d.status === 'failed')) return;
+    await page.waitForTimeout(500);
+  }
+  throw new Error('deliveries did not settle in time');
 }
 
 await login('alice@example.com', 'alice123');
@@ -49,7 +61,7 @@ await page.getByRole('button', { name: 'Events' }).click();
 await page.getByLabel('Magnitude').fill('6.9');
 await page.getByRole('button', { name: 'Inject' }).click();
 await page.getByText(/passed baseline, 1 notification/).waitFor();
-await page.waitForTimeout(3000);
+await waitForDeliveriesSettled();
 await page.getByRole('button', { name: 'Deliveries' }).click();
 await page.getByRole('button', { name: 'Refresh' }).click();
 await page.getByRole('cell', { name: 'webhook', exact: true }).waitFor();
@@ -58,7 +70,7 @@ check(/sent\s+webhook\s+Ops webhook/.test(row), `delivery log: ${row.replace(/\s
 await shot(page, '10-webhook-delivery');
 
 const msgs = await (await fetch('http://localhost:4010/messages')).json();
-const ops = msgs.filter((m) => m.hook === 'ops');
+const ops = msgs.filter((m) => m.hook === 'ops' && m.receivedAt >= startedAt);
 check(ops.length === 1 && ops[0].body.type === 'event-pulse.notification' && ops[0].body.title === 'M 6.9 - Demo Trench', 'receiver got the JSON payload');
 
 await browser.close();

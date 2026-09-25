@@ -20,6 +20,17 @@ async function login(email, password) {
   await page.getByRole('button', { name: 'Log in' }).click();
 }
 
+// The worker ticks every 5s by default: poll the admin API until no delivery is still pending, instead of a fixed sleep.
+async function waitForDeliveriesSettled(timeoutMs = 30_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const list = await (await page.request.get(`${APP}/api/admin/deliveries`)).json();
+    if (list.length && list.every((d) => d.status === 'sent' || d.status === 'failed')) return;
+    await page.waitForTimeout(500);
+  }
+  throw new Error('deliveries did not settle in time');
+}
+
 // --- user flow ---
 await page.goto(`${APP}/alerts`);
 await page.waitForURL('**/login');
@@ -86,7 +97,7 @@ await page.getByRole('button', { name: 'Inject' }).click();
 await page.getByText(/passed baseline, 1 notification/).waitFor();
 check(true, 'admin injected an M7.2 quake and a wildfire headline, each creating 1 notification');
 
-await page.waitForTimeout(3000); // worker ticks every 1s in this run
+await waitForDeliveriesSettled();
 await page.getByRole('button', { name: 'Refresh' }).click();
 await page.getByRole('cell', { name: 'M 7.2 - Demo Trench' }).first().waitFor();
 await shot(page, '04-admin-events');

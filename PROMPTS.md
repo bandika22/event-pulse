@@ -52,6 +52,13 @@ Add two more rules to CLAUDE.md:
 2. Default workflow is committing directly to main with frequent, meaningful commits. Only use a separate branch when deliberately trying an approach we already suspect we'll reject - name it clearly (e.g. experiment/...) and note its existence and reason in PROCESS.md.
 ```
 
+## 2026-09-25, between 15:11 and 15:16 (exact time not recorded; added retroactively at 18:59)
+**Purpose:** Confirm committing the CLAUDE.md changes.
+
+```
+yes, commit then
+```
+
 ## 2026-09-25 15:16 +02:00
 **Purpose:** Write PLAN.md with phases, outputs, continuous AI-output validation, labeled acceptance criteria, and known constraints.
 
@@ -152,6 +159,13 @@ hozz már létre git ignore fájlt és ami odatarrtozik tedd már bele
 undo the last commit  please
 ```
 
+## 2026-09-25, between 17:27 and 17:35 (exact time not recorded; added retroactively at 18:59)
+**Purpose:** Re-commit the Phase 4 work after the undo.
+
+```
+you can commit now the changes
+```
+
 ## 2026-09-25 17:35 +02:00
 **Purpose:** Start Phase 5: Angular frontend (alerts, destinations, admin view per D13) with screenshots.
 
@@ -166,9 +180,37 @@ Start Phase 5 per PLAN.md: the Angular frontend for creating alerts and managing
 The login page shows demo credentials directly - that's fine for a local demo, but should it also say explicitly that this is dev-only and wouldn't ship this way in production? Also confirm these are documented in README too, not just on the page.
 ```
 
+## 2026-09-25, between 17:59 and 18:21 (exact time not recorded; added retroactively at 18:59)
+**Purpose:** Approve Phase 5 after reviewing screenshots, code and the running app; commit.
+
+```
+i checked the screenshots, codes and app, you can commit.
+```
+
 ## 2026-09-25 18:21 +02:00
 **Purpose:** Start Phase 6: add the third channel as the AC5/AC9 test.
 
 ```
 go aheadt to phase 6
+```
+
+## 2026-09-25, between 18:21 and 18:43 (exact time not recorded; added retroactively at 18:59)
+**Purpose:** Approve the three-commit split for Phase 6.
+
+```
+Approved. Commit this way.
+```
+
+## 2026-09-25 18:43 +02:00
+**Purpose:** Start Phase 7: wrap-up (finish README, retrospective, fresh-clone check).
+
+```
+go ahead to phase 7
+```
+
+## 2026-09-25 18:59 +02:00
+**Purpose:** Add the four skipped confirmations to PROMPTS.md (GDACS question stays removed), then commit Phase 7.
+
+```
+Add the four skipped confirmations to PROMPTS.md. Don't restore the GDACS question - that removal was intentional and stays. Then commit Phase 7.
 ```

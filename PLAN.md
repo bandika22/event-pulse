@@ -252,6 +252,52 @@ Add a third channel in its own commit, as the evidence for AC5.
 - **Produces:** the finished `README.md` (a working version with run steps, real vs. synthetic data, and the dev-only credentials caveat exists since Phase 5; add known gaps), and a short retrospective of what's incomplete and why.
 - **Phase check:** a fresh clone runs by following the README alone.
 
+#### Result
+
+**README** finished: what's real vs. synthetic, how it works, run steps (one terminal per service), all 12 backend settings (checked against `config.ts`), dev-only credentials with the production checklist, known gaps, and a map of the process and evidence files.
+
+**Fresh-clone check** (clone of `0b4eb42` into a temp dir, following the README):
+- `docker compose up -d` → reused the running Mailpit container (same Compose project name).
+- Backend `npm install`: 5 s, no native build. `npm test`: 49 pass. Typecheck clean.
+- Frontend `npm install`: 22 s. `ng build`: clean.
+- Both committed browser scripts pass against the clone with **README defaults** (demo flow 16/16, webhook flow 7/7).
+- **Deviation:** a parallel instance of the app was running on :3000 and :4200, so the clone ran on :3100 and :4300 (`PORT=3100`, `ng serve --port 4300` with a proxy to :3100). Nothing else differed from the README.
+- **Found by the check:** the browser scripts only passed with `WORKER_TICK_MS=1000`, which every earlier run had set and the README doesn't. With the default 5 s tick, a fixed 3 s wait saw deliveries still `pending`. Both scripts now poll the admin API until deliveries settle. The webhook script also counted stub messages from earlier runs (the stub keeps them in memory); it now counts only its own.
+
+#### Retrospective
+
+**Acceptance criteria**
+
+| AC | Status | Evidence / caveat |
+|---|---|---|
+| AC1 set up alerts | ✅ | UI + API; `03-my-alerts.png` |
+| AC2 notified on important events | ✅ | Live for earthquakes; market and news synthetic (D4) |
+| AC3 email | ✅ | Delivered to Mailpit; no real SMTP provider tested |
+| AC4 Slack | ✅, partly verified | Success path via local stub only; real Slack verified only for its error response |
+| AC5 more channels later | ✅ | Webhook added in `87363cb` |
+| AC6 admin view | ✅ | D13 scope; screenshots 04–07 |
+| AC7 explicit importance rule | ✅ | Verdict + reason per event; news rule is weak by nature |
+| AC8 one real source | ✅ | USGS, live |
+| AC9 channel needs only new files + registration | ⚠️ partly | +2 lines in shared `config.ts`; exposed a masking bug in core (fixed separately) |
+| AC10 dedup | ✅ | Unique key + tests + mutation check; USGS id-change risk unverified |
+| AC11 every attempt recorded | ✅ | `delivery_attempts` (added in Phase 4 after the Phase 3 schema missed it) |
+| AC12 local demo without credentials | ✅ | Mailpit + stub; inject/replay |
+
+**What the AI got wrong, and what caught it** (details in `PROCESS.md`):
+- *Stated from memory, wrong in reality:* data-source URLs (GDACS, Stooq), USGS's `alert` field as a severity signal, Angular 22 on this Node version. **Caught by** real requests and running the tools.
+- *Summary treated as source:* GDACS terms described from a fetch tool's summary, then drifted into "not prohibited". **Caught by** the user asking for the actual quoted line.
+- *Invented facts in the log itself:* two `PROCESS.md` timestamps typed without checking the clock. **Caught by** comparing against the real time.
+- *Design gaps:* the Phase 3 schema missed AC11's per-attempt record; masking only worked for Slack URLs; route guards used `inject()` after `await`. **Caught by** writing the code against the ACs, the third channel, and a real-browser run respectively. Build and typecheck passed in every case.
+- *Tests that couldn't fail:* a signature test that recomputed with the function under test; an API masking test that only checked for a trailing "…". **Caught by** deliberate mutations and the browser check.
+- *Scope creep:* alert edit/pause proposed as "cheap"; a separate decisions file; a separate architecture doc. **Caught by** user review.
+- *False pointers:* code comments and a log line referring to a README that didn't exist yet. **Caught by** the user asking to confirm.
+
+**What worked:** verifying before building (Phase 2 before Phase 3); a validation gate at every phase instead of at the end; mutation checks on tests that passed first time; a real-browser run for the UI; a third channel as the extensibility test, measured by its actual diff.
+
+**Next steps:** test real Slack and a real SMTP provider; add per-channel config so channels stop editing `config.ts`; render `sensitive` fields as password inputs; confirm how USGS handles event-id changes; add frontend unit tests; production hardening per the README checklist.
+
+**Time:** about 5 hours of the suggested 24 (13:49 → 18:5x on 2026-09-25).
+
 **Cut line if time runs short:** Phases 1–4 and 6 are the core (they prove AC1–AC5 and AC9). Phase 5 can shrink to the minimum UI. AC8's real source can fall back to fixtures, provided that is stated clearly.
 
 ## Validation gate (after every phase)
