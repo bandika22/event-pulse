@@ -106,3 +106,10 @@ Rest is fine. Just mark D2 and D4 as provisional for now, since they depend on w
 ```
 yes commit and start phase 2
 ```
+
+## 2026-09-25 16:47 +02:00
+**Purpose:** Stop source testing; USGS is the only real source, market and news synthetic; update D2/D4/D8 and commit Phase 2.
+
+```
+Let's not keep testing GDACS, Stooq, Yahoo, GDELT, Alpha Vantage, or the Guardian any further -USGS alone is enough to satisfy AC8, it's live and already verified. Use USGS as the one real source, drop GDACS from D4, and make market and news synthetic from the start. Update D2, D4, and D8 in PLAN.md, then commit Phase 2.
+```

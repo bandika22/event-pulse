@@ -28,19 +28,19 @@ Working plan for taking the brief (`docs/brief.pdf`) to a working implementation
 
 ## Decisions (Phase 1)
 
-All of these are our decisions, not the brief's. **Provisional** = depends on Phase 2 findings; confirm or revise there.
+All of these are our decisions, not the brief's. D2, D4, and D8 were revised after Phase 2 (see `docs/data-sources.md`).
 
 **Alert model**
-- **D1. Alert** = one category + category-specific filters (disaster: min severity; market: symbol from a supported list + % move; news: keywords) + one or more destinations. Free-text/LLM-interpreted alerts rejected: non-deterministic, conflicts with AC7.
-- **D2. Importance (provisional).** A system baseline per category, which users can raise but not lower. Disasters: the source's own severity signal (magnitude or alert level). Market: % change vs. previous close, system minimum ~2%. News: keyword match within a top-headlines/breaking feed. This is the weakest rule, since news has no objective importance signal.
+- **D1. Alert** = one category + category-specific filters (disaster: min magnitude; market: symbol from a supported list + % move; news: keywords) + one or more destinations. Free-text/LLM-interpreted alerts rejected: non-deterministic, conflicts with AC7.
+- **D2. Importance** (revised after Phase 2). A system baseline per category, which users can raise but not lower. Disasters (USGS earthquakes): **magnitude**, system minimum M5.0 (our choice). USGS's `alert` (PAGER) field isn't used: it's null on almost all events. Market: % change vs. previous close, system minimum 2%. News: keyword match on the synthetic feed. This is the weakest rule, since news has no objective importance signal and no real feed behind it.
 - **D3. No geographic filter.** Deferred. Known gap: "near me" not supported.
-- **D4. Real source (provisional).** Disasters use a real feed (likely USGS). Market and news likely use fixtures, depending on free tiers and terms.
+- **D4. Real source** (revised after Phase 2). **USGS earthquake feed is the one real, live source** (verified, public domain; see `docs/data-sources.md`). This satisfies AC8. Disasters therefore means earthquakes only. **Market and news are synthetic from the start**, clearly labeled as such in the UI and README. No further source testing.
 
 **Delivery**
 - **D5.** Immediate delivery only. Digests and quiet hours deferred.
 - **D6.** One alert can fan out to several destinations.
 - **D7.** Destinations (email address, Slack webhook URL) are a separate per-user entity that alerts reference. Channel config stays out of the alert model.
-- **D8. Dedup** by the source's own event ID (market: symbol + trading day + threshold crossed). One notification per event per alert. Cross-source clustering deferred; AC10 reworded to "source event" because of this.
+- **D8. Dedup** (revised after Phase 2) by the source's own event ID: USGS `id`; market: symbol + trading day + threshold crossed. One notification per event per alert. USGS revises events after publication (`updated` > `time`), so updated events are re-evaluated: a revision never re-notifies an alert already notified, but an event revised *into* an alert's threshold notifies then. Known risk: USGS's `ids` list suggests an event's ID can change; unverified. Cross-source clustering deferred; AC10 reworded to "source event" because of this.
 - **D9. Slack** via incoming webhooks (user-supplied URL, posts to a channel, not a DM). Slack app with OAuth rejected: needs registration and a public redirect URL.
 - **D10. Email** via SMTP, local mail catcher for the demo. Provider swapped by config.
 - **D11. Failures:** retry with backoff up to a limit, then marked failed, shown in the admin view, with manual retry.

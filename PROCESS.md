@@ -36,3 +36,10 @@ Entries are added only when a Claude proposal is rejected or modified, a failing
 - **Found:** User rejected D22's inclusion: it isn't in the brief, maps to no AC, and "cheap" isn't a justification. D2 and D4 rest on unverified claims about external sources.
 - **Decided:** Edit/pause/delete moved to a nice-to-have list, not built by default. D2 and D4 marked provisional until Phase 2. Other proposals accepted, including the AC10 rewording and D18 (no backfill).
 - **Why:** Scope is set by the brief and the ACs, not by what's easy to add. Decisions based on unverified facts shouldn't read as settled.
+
+## 2026-09-25 16:47 — USGS as the only real source; GDACS dropped
+
+- **Proposed:** Claude recommended GDACS as the live disaster source (USGS as fallback) and recommended committing GDACS payloads "with attribution". It described GDACS's terms as "don't forbid reuse, but don't grant it", and in this file as "at least not-prohibited" reuse.
+- **Found:** User challenged the inconsistent descriptions of GDACS's terms and asked for the actual line. There was none to quote: Claude had only a fetch tool's model-written summary of the page, not its raw text. The summary said the terms don't address reuse, and Claude had turned that silence into a lean toward "not prohibited" and a recommendation to commit.
+- **Decided (user):** Stop testing other sources. USGS is the one real source (enough for AC8). GDACS dropped from D4 and its fixtures removed. Market and news synthetic from the start. D2, D4, D8 updated in `PLAN.md`; GDACS terms marked unverified in `docs/data-sources.md`.
+- **Why:** USGS is live, verified, and public domain, so it satisfies AC8 without resting on any unverified terms. More source research wouldn't move any AC forward.
