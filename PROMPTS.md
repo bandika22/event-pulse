@@ -228,3 +228,10 @@ Update the CLAUDE.md logging rule: log every substantive prompt verbatim in PROM
 ```
 Both additions approved. Commit it.
 ```
+
+## 2026-09-25 19:10 +02:00
+**Purpose:** Push main to origin.
+
+```
+push it
+```
