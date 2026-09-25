@@ -214,3 +214,17 @@ go ahead to phase 7
 ```
 Add the four skipped confirmations to PROMPTS.md. Don't restore the GDACS question - that removal was intentional and stays. Then commit Phase 7.
 ```
+
+## 2026-09-25 19:05 +02:00
+**Purpose:** Change the CLAUDE.md logging rule to include short confirmations.
+
+```
+Update the CLAUDE.md logging rule: log every substantive prompt verbatim in PROMPTS.md, including short confirmations like "yes, commit" or "approved"
+```
+
+## 2026-09-25 19:09 +02:00
+**Purpose:** Approve both additions to the logging rule and commit.
+
+```
+Both additions approved. Commit it.
+```

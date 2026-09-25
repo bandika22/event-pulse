@@ -2,13 +2,13 @@
 
 ## Prompt log
 
-Before acting on any substantive prompt from the user, append it to `PROMPTS.md` at the end with:
+Before acting on any prompt from the user, append it to `PROMPTS.md` at the end with:
 
-- a timestamp (`YYYY-MM-DD HH:MM ±TZ`)
+- a timestamp (`YYYY-MM-DD HH:MM ±TZ`), taken from the clock, never guessed
 - a one-line note on the prompt's purpose
 - the user's exact wording, verbatim — never paraphrase, trim, or fix typos
 
-Skip trivial messages (e.g. "yes", "thanks", slash commands).
+This includes short confirmations and approvals (e.g. "yes, commit", "approved"). Only slash commands (e.g. `/login`) are not logged.
 
 ## Repo is the only source of truth
 
