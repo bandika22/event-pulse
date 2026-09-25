@@ -1,6 +1,6 @@
 # Event Pulse
 
-Users set up alerts and get notified by email or Slack when something important happens: earthquakes (live), market moves and news (synthetic demo data). Admins get a view of users, alerts, events, deliveries and source health.
+Users set up alerts and get notified by email, Slack or a generic signed webhook when something important happens: earthquakes (live), market moves and news (synthetic demo data). Admins get a view of users, alerts, events, deliveries and source health.
 
 How this was built (plan, decisions, corrections, prompts) is in [`PLAN.md`](PLAN.md), [`PROCESS.md`](PROCESS.md) and [`PROMPTS.md`](PROMPTS.md). *The full README is Phase 7; this is the working version.*
 
@@ -26,7 +26,7 @@ npm start                                     # terminal 2: API on :3000 (create
 cd ../frontend && npm install && npm start    # terminal 3: app on http://localhost:4200
 ```
 
-In the app, a Slack destination can use `http://localhost:4010/hook/<any-name>` (messages are listed at `http://localhost:4010/messages`), or `http://localhost:4010/hook/fail-404` to see a failed delivery.
+In the app, a Slack destination can use `http://localhost:4010/hook/<any-name>` (messages are listed at `http://localhost:4010/messages`), or `http://localhost:4010/hook/fail-404` to see a failed delivery. A webhook destination can use the same stub URLs; real endpoints must be allowed with `WEBHOOK_ALLOWED_PREFIXES` (comma-separated URL prefixes).
 
 Tests: `cd backend && npm test`.
 
@@ -46,3 +46,4 @@ On first start, the backend seeds two accounts and the login page lists them:
 - **Set `SESSION_SECRET`.** The default (`dev-only-secret-change-me`) is public in this repo, so anyone could forge session cookies.
 - **Serve over HTTPS and mark the session cookie `secure`** (currently `httpOnly` + `SameSite=Lax` only).
 - **Restrict `SLACK_ALLOWED_PREFIXES`** to `https://hooks.slack.com/`; the default also allows the local stub on `http://localhost:4010/`.
+- **Set `WEBHOOK_ALLOWED_PREFIXES`** to the real endpoints you trust; the default allows only the local stub.

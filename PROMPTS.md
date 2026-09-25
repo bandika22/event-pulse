@@ -165,3 +165,10 @@ Start Phase 5 per PLAN.md: the Angular frontend for creating alerts and managing
 ```
 The login page shows demo credentials directly - that's fine for a local demo, but should it also say explicitly that this is dev-only and wouldn't ship this way in production? Also confirm these are documented in README too, not just on the page.
 ```
+
+## 2026-09-25 18:21 +02:00
+**Purpose:** Start Phase 6: add the third channel as the AC5/AC9 test.
+
+```
+go aheadt to phase 6
+```

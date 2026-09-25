@@ -51,7 +51,7 @@ All of these are our decisions, not the brief's. D2, D4, and D8 were revised aft
 
 **Scope**
 - **D14.** "Add more channels later" = code-level interface + registry, not an admin setting.
-- **D15. Third channel (tentative, confirmed in Phase 6):** generic outbound webhook (JSON POST, optional HMAC signature). SMS rejected: needs a provider account, can't be tested offline.
+- **D15. Third channel (confirmed and built in Phase 6):** generic outbound webhook (JSON POST, optional HMAC signature). SMS rejected: needs a provider account, can't be tested offline.
 - **D16.** No LLM in the product for v1.
 - **D17.** Demo scale, local only, polling every few minutes. How it runs is decided in Phase 3.
 
@@ -222,6 +222,31 @@ Add a third channel in its own commit, as the evidence for AC5.
 - **Diff measurement:** the commit should need only new files plus one registration line. Any change to core alert logic, dispatch, or existing channels is a finding and is logged in `PROCESS.md`.
 - **Produces:** the channel, its tests, and the commit's diff-stat recorded in the commit message and in this phase's result below.
 - **Phase check:** AC9, judged by the actual diff.
+
+#### Result
+
+**Channel:** `webhook` (`backend/src/channels/webhook.ts`). Config `url` + optional `secret`; JSON POST; if a secret is set, `X-EventPulse-Signature: sha256=HMAC(secret, "<timestamp>.<body>")` with `X-EventPulse-Timestamp`; redirects not followed (they could leave the allowlist); 2xx ok, 408/429/5xx retryable, other statuses permanent. It differs structurally from email and Slack: arbitrary endpoint with its own allowlist, a signing secret, an optional field, and a request-signing step.
+
+**Diff of the channel change**
+
+| File | Change |
+|---|---|
+| `backend/src/channels/webhook.ts` | new, 72 lines |
+| `backend/test/webhook.test.ts` | new, 97 lines |
+| `backend/src/channels/index.ts` (registration point) | +2 (import + registry entry) |
+| `backend/src/config.ts` | +2 (`webhookAllowedPrefixes` + comment) |
+| pipeline, delivery worker, email/Slack channels, channel types/registry, DB schema, **frontend** | **0** |
+
+**Verdict on AC9: partly holds.** The core flow (ingest → match → deliver) and the frontend needed no changes: the new channel's form rendered from `configFields`, and deliveries, retries and the admin log handled it as-is. Two things fell outside "new files + registration point":
+1. **Config coupling (`config.ts`, +2):** channel settings live in the shared config module, so any channel that needs its own setting (here an SSRF allowlist) must edit it. The design has no per-channel config mechanism.
+2. **A latent core bug (`app.ts`, fixed in a separate commit):** `maskConfig` showed the first 24 characters of any sensitive value, which was designed around Slack URLs (whose first 24 characters are the public `https://hooks.slack.com/`). The webhook's short signing secret was therefore shown in full in the destinations list. Email and Slack never triggered it. Masking now keeps only a URL's origin and fully hides other values.
+
+**Evidence**
+- `npm test`: 49 pass (7 new webhook tests, including one that sends a real ingested event through the unchanged worker to a local HTTP receiver); typecheck clean.
+- Mutation checks: following redirects fails the redirect test. Signing without the timestamp **initially passed** because the test recomputed the signature with the same function under test. The test now computes the HMAC independently, and the mutation fails it.
+- Browser (`docs/screenshots/webhook-flow.mjs`, unchanged frontend): 7 checks pass. The dropdown lists Email/Slack/Webhook, the form renders both fields with the secret optional, the secret is fully masked in the list, the delivery is `sent`, and the receiver got the JSON payload. Screenshots `09`, `10`. Phase 5 screenshots `01`–`08` regenerated after the masking fix (all 16 checks pass).
+
+**Known gaps:** sensitive fields are typed in plain text in the form (the frontend chooses the input type from `kind`, not `sensitive`; see `09`); `08-mailpit-inbox.png` also shows demo emails from a parallel session.
 
 ### Phase 7: Wrap-up
 - **Produces:** the finished `README.md` (a working version with run steps, real vs. synthetic data, and the dev-only credentials caveat exists since Phase 5; add known gaps), and a short retrospective of what's incomplete and why.
