@@ -15,6 +15,8 @@ export const config = {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean),
+  // Generic webhooks can target any host, so the default only allows the local stub; set this for real endpoints.
+  webhookAllowedPrefixes: (env.WEBHOOK_ALLOWED_PREFIXES ?? 'http://localhost:4010/').split(',').map((s) => s.trim()).filter(Boolean),
   usgs: {
     enabled: env.USGS_ENABLED !== 'false',
     feedUrl: env.USGS_FEED_URL ?? 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson',
