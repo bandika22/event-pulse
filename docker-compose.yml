@@ -1,0 +1,7 @@
+# Local mail catcher for the demo (AC12). Image, tag and ports verified in Phase 4.
+services:
+  mailpit:
+    image: axllent/mailpit:v1.31.2
+    ports:
+      - "1025:1025" # SMTP (backend sends here)
+      - "8025:8025" # web UI + API: http://localhost:8025

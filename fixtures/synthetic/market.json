@@ -1,0 +1,5 @@
+[
+  { "category": "market", "symbol": "AAPL", "changePct": -3.4, "price": 325.1, "tradingDay": "2026-09-24" },
+  { "category": "market", "symbol": "MSFT", "changePct": 1.1, "price": 512.4, "tradingDay": "2026-09-24" },
+  { "category": "market", "symbol": "TSLA", "changePct": 6.8, "price": 402.9, "tradingDay": "2026-09-24" }
+]

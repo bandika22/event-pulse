@@ -130,3 +130,24 @@ The removed log entries were intentional, no need to restore them.
 2. Keep configFields.
 3. Approved, the D8 market dedup simplification.
 ```
+
+## 2026-09-25 17:10 +02:00
+**Purpose:** Start Phase 4 (backend core with email and Slack), verifying Mailpit image/ports and Slack webhook error codes along the way.
+
+```
+Start Phase 4 per PLAN.md. Verify the Mailpit image/ports and Slack's webhook error codes as you go - both are unverified in PLAN.md.
+```
+
+## 2026-09-25 17:42 +02:00
+**Purpose:** Create a .gitignore file and include all relevant generated or local files.
+
+```
+hozz már létre git ignore fájlt és ami odatarrtozik tedd már bele
+```
+
+## 2026-09-25 17:27 +02:00
+**Purpose:** Undo the Phase 4 commit.
+
+```
+undo the last commit  please
+```

@@ -50,3 +50,10 @@ Entries are added only when a Claude proposal is rejected or modified, a failing
 - **Found:** User preferred a stable library and asked what switching would cost before Phase 4 builds on it. Claude test-installed `better-sqlite3` on this machine: v13.0.3 installed from a prebuilt binary in ~3s, no compile step, and unique violations raise the specific `SQLITE_CONSTRAINT_UNIQUE` (vs. `node:sqlite`'s generic `ERR_SQLITE_ERROR`).
 - **Decided (user):** Use `better-sqlite3`. Cost: a one-line change in `PLAN.md`, since no code existed yet.
 - **Why:** The feared downside of a native module (a build toolchain on Windows) didn't materialize, so there was no reason to accept an experimental API. The specific error code also makes the dedup path (AC10) cleaner to detect.
+
+## 2026-09-25 17:35 — Phase 4: design assumptions corrected during the build
+
+- **Proposed:** Phase 3's schema (reviewed and committed) kept delivery state in one `deliveries` row per destination. Phase 3 also assumed `better-sqlite3` installs from a prebuilt binary via its install script, and the 17:01 entry above justified it partly by its specific unique-violation error code for dedup.
+- **Found:** (1) One row per delivery keeps only the latest attempt, but AC11 says *every* attempt is recorded. (2) npm 11 blocked `better-sqlite3`'s install script (`node-gyp rebuild`) yet the module loaded anyway. Inspection showed v13 ships prebuilt binaries inside the package, so the script isn't how the binary arrives. (3) The dedup code uses `INSERT OR IGNORE` and checks `changes`, so the unique-violation error code is never used; that part of the 17:01 rationale doesn't hold.
+- **Decided:** Added a `delivery_attempts` table (tested; visible per delivery in the admin API). Denied both blocked install scripts explicitly in `backend/package.json` so clones never attempt a native build. The `better-sqlite3` choice stands on stability alone.
+- **Why:** The schema gap would have failed AC11 silently. The install behaviour would have differed across machines if left to npm's defaults.

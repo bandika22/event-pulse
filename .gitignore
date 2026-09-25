@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Local databases (backend/data/ is the default DB_PATH dir)
+backend/data/
+*.db
+*.db-shm
+*.db-wal
+
+# Build output and caches (backend runs via tsx; Angular output lands here in Phase 5)
+dist/
+out-tsc/
+.angular/
+coverage/
+*.tsbuildinfo
+
+# Secrets and local env
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json

@@ -90,7 +90,7 @@ Backend stack, domain model (events, alerts, users, channels, deliveries), the c
 - **Backend:** Node 24 + TypeScript + Express. One process: HTTP API, USGS poller, and delivery worker. No queue or cache service (D17: demo scale).
 - **DB:** SQLite via `better-sqlite3`. Verified on Node 24.14 / Windows: v13.0.3 installs from a prebuilt binary (no compile), and unique violations raise `SQLITE_CONSTRAINT_UNIQUE`. Chosen over Node's built-in `node:sqlite`, which works but prints an `ExperimentalWarning`.
 - **Auth:** passwords hashed with `node:crypto` scrypt; signed session token in an httpOnly cookie.
-- **Email:** SMTP (nodemailer) to Mailpit in Docker for the demo. Image name and ports are **unverified**, to be checked in Phase 4.
+- **Email:** SMTP (nodemailer) to Mailpit in Docker for the demo. Image and ports verified in Phase 4 (see Phase 4 result).
 - **Slack demo:** a small local stub that accepts webhook POSTs and records them, so no real Slack workspace is needed (AC12). Real webhook URLs work unchanged.
 - **Frontend:** Angular (fixed). **Tests:** Vitest.
 
@@ -135,7 +135,7 @@ type SendResult = { ok: true } | { ok: false; retryable: boolean; error: string 
 | Failure → `retryable` | SMTP 4xx, connection error | 429, 5xx, timeout | 5xx, timeout |
 | Failure → permanent | SMTP 5xx (bad address) | 4xx (invalid/revoked URL) | 4xx |
 
-SMTP classes follow the standard 4xx transient / 5xx permanent split. Slack's actual webhook error codes are from memory and **unverified**; check in Phase 4 before relying on them.
+SMTP classes follow the standard 4xx transient / 5xx permanent split. Slack's error behaviour was checked in Phase 4 (see Phase 4 result).
 
 All three fit the interface without changes. **Finding from the check:** the channel config form lives in Angular. If each channel had a hand-built form, a third channel would need frontend edits and AC9 would fail. That's why `configFields` exists: Angular renders destination forms generically from field descriptors (name, label, kind: text/email/url/secret, required).
 
@@ -174,6 +174,30 @@ Filters by category: earthquake `{minMagnitude ≥ 5.0}`, market `{symbol, minCh
 Ingestion, normalization, importance rules, matching, dedup, dispatch, delivery log, and the email and Slack channels. Includes a way to inject or replay events.
 - **Produces:** backend code and tests driven by the Phase 2 fixtures.
 - **Phase check:** tests pass, including dedup and channel-failure cases. There is a manual end-to-end run: inject an event, see the email in the mail catcher, see the Slack message or stub call.
+
+#### Result
+
+**Verified (previously unverified)**
+- **Mailpit:** `axllent/mailpit`, pinned to `v1.31.2` (tag confirmed to exist). Exposed ports from `docker image inspect`: 1025 SMTP (no TLS), 8025 web UI + API, 1110 POP3 (unused). `GET /api/v1/messages` returns 200.
+- **Slack webhooks:** a real POST to a made-up workspace returns **404 with plain-text body `no_team`** (not JSON), for valid JSON, empty JSON and non-JSON bodies alike. Slack's docs (read via a summarizing fetch) list error strings for 400/403/404 and say nothing about 429. Classification: 2xx ok; 429 and 5xx retryable; other 4xx permanent.
+- **nodemailer:** `err.responseCode` is set from the SMTP reply (`smtp-connection/index.js:826`), so 5xx → permanent, 4xx/connection errors → retryable.
+- **better-sqlite3 13.0.3** ships prebuilt binaries in the package (incl. win32-x64). Its implicit `node-gyp rebuild` install script and esbuild's postinstall are explicitly denied in `backend/package.json` (`allowScripts`), so a fresh clone never attempts a native build.
+
+**Built** (`backend/`): schema, USGS poller and normalizer, synthetic market/news/earthquake injection and fixture replay (`fixtures/synthetic/`), importance and matching, ingest with dedup/revision/no-backfill, delivery worker with retry/backoff and per-attempt log, email and Slack channels, cookie-session auth, user and admin APIs, a local Slack stub (`npm run slack-stub`; hooks `fail-404`/`fail-500` simulate failures), `docker-compose.yml` for Mailpit.
+
+**Changes from Phase 3**
+- Added `delivery_attempts` table: the Phase 3 schema only kept the latest attempt per delivery, which doesn't meet AC11 ("every delivery attempt is recorded").
+- Slack webhook URLs are restricted to an allowlist of prefixes (default: `https://hooks.slack.com/`, `http://localhost:4010/`), since the server POSTs to user-supplied URLs (SSRF).
+- The AC9 registration point is `backend/src/channels/index.ts`: in practice an import line plus one array entry.
+
+**Evidence**
+- `npm test`: 41 tests pass; `npm run typecheck` clean.
+- **Mutation check:** switching dedup from `INSERT OR IGNORE` to `INSERT OR REPLACE` fails 3 dedup tests; removing the no-backfill condition fails the D18 test. Restored file verified byte-identical.
+- **End-to-end** (Mailpit + Slack stub + backend on a fresh DB): real USGS poll fetched 12 events; a user alert (M ≥ 6) with email, stub Slack and a `fail-404` Slack destination; an injected M7.2 produced an email in Mailpit and a stub Slack message; the `fail-404` delivery was marked failed after 1 attempt with `HTTP 404: no_service` and stayed failed. A news alert on "wildfire" matched the replayed synthetic headline.
+
+**Still unverified / known gaps:** whether a USGS event's `id` can change (D8 risk); Slack's behaviour on rate limiting; demo credentials and the default session secret are dev-only.
+
+**Run (dev):** `docker compose up -d` → `cd backend && npm install && npm run slack-stub` (second terminal) → `npm start`. API on :3000, Mailpit UI on :8025. Demo logins: `admin@example.com` / `admin123`, `alice@example.com` / `alice123`.
 
 ### Phase 5: Angular frontend
 The user UI for creating alerts and managing destinations, and the admin view (scope per D13).

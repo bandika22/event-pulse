@@ -1,0 +1,5 @@
+[
+  { "category": "news", "id": "demo-news-1", "headline": "Central bank announces surprise interest rate cut", "summary": "Synthetic demo headline." },
+  { "category": "news", "id": "demo-news-2", "headline": "Wildfire forces evacuation of coastal towns", "summary": "Synthetic demo headline." },
+  { "category": "news", "id": "demo-news-3", "headline": "Software update fixes battery drain on popular phones", "summary": "Synthetic demo headline. Contains 'software' but not the word 'war'." }
+]
