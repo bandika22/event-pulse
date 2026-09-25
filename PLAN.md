@@ -40,7 +40,7 @@ All of these are our decisions, not the brief's. D2, D4, and D8 were revised aft
 - **D5.** Immediate delivery only. Digests and quiet hours deferred.
 - **D6.** One alert can fan out to several destinations.
 - **D7.** Destinations (email address, Slack webhook URL) are a separate per-user entity that alerts reference. Channel config stays out of the alert model.
-- **D8. Dedup** (revised after Phase 2) by the source's own event ID: USGS `id`; market: symbol + trading day + threshold crossed. One notification per event per alert. USGS revises events after publication (`updated` > `time`), so updated events are re-evaluated: a revision never re-notifies an alert already notified, but an event revised *into* an alert's threshold notifies then. Known risk: USGS's `ids` list suggests an event's ID can change; unverified. Cross-source clustering deferred; AC10 reworded to "source event" because of this.
+- **D8. Dedup** (revised after Phase 2) by the source's own event ID: USGS `id`; market: symbol + trading day (revised in Phase 3: a growing move is a revision, not a new event). One notification per event per alert. USGS revises events after publication (`updated` > `time`), so updated events are re-evaluated: a revision never re-notifies an alert already notified, but an event revised *into* an alert's threshold notifies then. Known risk: USGS's `ids` list suggests an event's ID can change; unverified. Cross-source clustering deferred; AC10 reworded to "source event" because of this.
 - **D9. Slack** via incoming webhooks (user-supplied URL, posts to a channel, not a DM). Slack app with OAuth rejected: needs registration and a public redirect URL.
 - **D10. Email** via SMTP, local mail catcher for the demo. Provider swapped by config.
 - **D11. Failures:** retry with backoff up to a limit, then marked failed, shown in the admin view, with manual retry.
@@ -83,6 +83,92 @@ Check the candidate sources (disaster, market, news feeds) by making real reques
 Backend stack, domain model (events, alerts, users, channels, deliveries), the channel abstraction, and the ingest → detect → match → dispatch flow.
 - **Produces:** the architecture written into this section (short, with one diagram) and the schema. If the design grows too complex for a short section, Claude explains why and asks before splitting it into a separate file.
 - **Phase check:** every AC maps to a component. The channel interface is checked on paper against email, Slack, and a third hypothetical channel before any code exists.
+
+#### Result (reviewed)
+
+**Stack**
+- **Backend:** Node 24 + TypeScript + Express. One process: HTTP API, USGS poller, and delivery worker. No queue or cache service (D17: demo scale).
+- **DB:** SQLite via `better-sqlite3`. Verified on Node 24.14 / Windows: v13.0.3 installs from a prebuilt binary (no compile), and unique violations raise `SQLITE_CONSTRAINT_UNIQUE`. Chosen over Node's built-in `node:sqlite`, which works but prints an `ExperimentalWarning`.
+- **Auth:** passwords hashed with `node:crypto` scrypt; signed session token in an httpOnly cookie.
+- **Email:** SMTP (nodemailer) to Mailpit in Docker for the demo. Image name and ports are **unverified**, to be checked in Phase 4.
+- **Slack demo:** a small local stub that accepts webhook POSTs and records them, so no real Slack workspace is needed (AC12). Real webhook URLs work unchanged.
+- **Frontend:** Angular (fixed). **Tests:** Vitest.
+
+**Flow**
+
+```mermaid
+flowchart LR
+  USGS[USGS feed<br/>poll every 2 min] --> N[Normalize]
+  SYN[Synthetic market/news<br/>admin inject + fixture replay] --> N
+  N --> E[(events<br/>upsert by source+id)]
+  E --> I[Importance baseline<br/>per category, D2]
+  I --> M[Match enabled alerts<br/>created before first_seen, D18]
+  M --> NT[(notifications<br/>unique alert+event, D8)]
+  NT --> D[(deliveries<br/>one per destination)]
+  D --> W[Delivery worker<br/>retry/backoff, D11]
+  W --> R{Channel registry}
+  R --> EM[email]
+  R --> SL[slack]
+  R -.-> TH[3rd channel<br/>Phase 6]
+```
+
+New and *revised* events both go through importance and matching. Dedup is enforced by the `notifications` unique key, so a revision never re-notifies an alert, but an event revised into a threshold notifies then (D8).
+
+**Channel abstraction**
+```ts
+interface Channel {
+  type: string;                            // 'email' | 'slack' | ...
+  configFields: ConfigField[];             // drives the destination form in Angular
+  validateConfig(raw: unknown): Config;    // on destination create
+  send(n: Notification, cfg: Config): Promise<SendResult>;
+}
+type SendResult = { ok: true } | { ok: false; retryable: boolean; error: string };
+```
+`Notification` is channel-neutral (title, category, severity text, time, source link, alert name, match reason; D21). Each channel formats it itself. The registry is a map from `type` to `Channel`.
+
+**Paper check against three channels**
+
+| | Email | Slack | Webhook (Phase 6 candidate) |
+|---|---|---|---|
+| Config | `address` | `webhookUrl` | `url`, optional `secret` |
+| Payload | subject + text/HTML | JSON `text` | JSON body + HMAC header |
+| Failure → `retryable` | SMTP 4xx, connection error | 429, 5xx, timeout | 5xx, timeout |
+| Failure → permanent | SMTP 5xx (bad address) | 4xx (invalid/revoked URL) | 4xx |
+
+SMTP classes follow the standard 4xx transient / 5xx permanent split. Slack's actual webhook error codes are from memory and **unverified**; check in Phase 4 before relying on them.
+
+All three fit the interface without changes. **Finding from the check:** the channel config form lives in Angular. If each channel had a hand-built form, a third channel would need frontend edits and AC9 would fail. That's why `configFields` exists: Angular renders destination forms generically from field descriptors (name, label, kind: text/email/url/secret, required).
+
+**Schema (SQLite)**
+
+| Table | Key columns | Notes |
+|---|---|---|
+| `users` | id, email (unique), password_hash, role | role: `user`/`admin` (D12) |
+| `destinations` | id, user_id, channel_type, label, config_json | D7 |
+| `alerts` | id, user_id, name, category, filters_json, enabled, created_at | enabled: admin disable only (D13) |
+| `alert_destinations` | alert_id, destination_id | fan-out (D6) |
+| `events` | id, source, source_event_id, category, title, url, occurred_at, data_json, synthetic, first_seen_at, last_updated_at, baseline_passed, baseline_reason | unique (source, source_event_id); verdict + reason shown in admin (AC7) |
+| `notifications` | id, alert_id, event_id, reason, created_at | **unique (alert_id, event_id)** = dedup (AC10) |
+| `deliveries` | id, notification_id, destination_id, status, attempts, last_error, next_attempt_at, sent_at | status: pending/retrying/sent/failed (AC11) |
+| `source_status` | source, last_success_at, last_error, last_error_at | source health (D13) |
+
+Filters by category: earthquake `{minMagnitude ≥ 5.0}`, market `{symbol, minChangePct ≥ 2}`, news `{keywords[]}`.
+
+**AC → component**
+
+| AC | Covered by |
+|---|---|
+| AC1 | alerts API + Angular alert form |
+| AC2 | poller/injector → importance → matching |
+| AC3, AC4 | email and slack channels |
+| AC5, AC9 | `Channel` interface + registry + generic `configFields` forms; proven in Phase 6 |
+| AC6 | admin API + Angular admin view |
+| AC7 | per-category baseline rules; `baseline_reason` stored per event |
+| AC8 | USGS poller |
+| AC10 | `notifications` unique key |
+| AC11 | `deliveries` table + worker + admin delivery log |
+| AC12 | Mailpit + Slack stub via Docker Compose; admin inject; fixture replay |
+
 
 ### Phase 4: Backend core with email and Slack
 Ingestion, normalization, importance rules, matching, dedup, dispatch, delivery log, and the email and Slack channels. Includes a way to inject or replay events.

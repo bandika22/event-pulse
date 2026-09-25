@@ -43,3 +43,10 @@ Entries are added only when a Claude proposal is rejected or modified, a failing
 - **Found:** User challenged the inconsistent descriptions of GDACS's terms and asked for the actual line. There was none to quote: Claude had only a fetch tool's model-written summary of the page, not its raw text. The summary said the terms don't address reuse, and Claude had turned that silence into a lean toward "not prohibited" and a recommendation to commit.
 - **Decided (user):** Stop testing other sources. USGS is the one real source (enough for AC8). GDACS dropped from D4 and its fixtures removed. Market and news synthetic from the start. D2, D4, D8 updated in `PLAN.md`; GDACS terms marked unverified in `docs/data-sources.md`.
 - **Why:** USGS is live, verified, and public domain, so it satisfies AC8 without resting on any unverified terms. More source research wouldn't move any AC forward.
+
+## 2026-09-25 17:01 — better-sqlite3 instead of node:sqlite
+
+- **Proposed:** Claude proposed Node's built-in `node:sqlite` to avoid a native dependency, after verifying it works on Node 24.14 but emits an `ExperimentalWarning`.
+- **Found:** User preferred a stable library and asked what switching would cost before Phase 4 builds on it. Claude test-installed `better-sqlite3` on this machine: v13.0.3 installed from a prebuilt binary in ~3s, no compile step, and unique violations raise the specific `SQLITE_CONSTRAINT_UNIQUE` (vs. `node:sqlite`'s generic `ERR_SQLITE_ERROR`).
+- **Decided (user):** Use `better-sqlite3`. Cost: a one-line change in `PLAN.md`, since no code existed yet.
+- **Why:** The feared downside of a native module (a build toolchain on Windows) didn't materialize, so there was no reason to accept an experimental API. The specific error code also makes the dedup path (AC10) cleaner to detect.

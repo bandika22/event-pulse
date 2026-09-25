@@ -113,3 +113,20 @@ yes commit and start phase 2
 ```
 Let's not keep testing GDACS, Stooq, Yahoo, GDELT, Alpha Vantage, or the Guardian any further -USGS alone is enough to satisfy AC8, it's live and already verified. Use USGS as the one real source, drop GDACS from D4, and make market and news synthetic from the start. Update D2, D4, and D8 in PLAN.md, then commit Phase 2.
 ```
+
+## 2026-09-25 16:54 +02:00
+**Purpose:** Start Phase 3 (architecture and data model).
+
+```
+continue with phase 3
+```
+
+## 2026-09-25 17:01 +02:00
+**Purpose:** Phase 3 review: switch to better-sqlite3 if cheap, keep configFields, approve the D8 market dedup simplification.
+
+```
+The removed log entries were intentional, no need to restore them.
+1. Switch to better-sqlite3 instead of node:sqlite - how much extra work is that right now, before Phase 4 builds on it? If it's small, let's do it now.
+2. Keep configFields.
+3. Approved, the D8 market dedup simplification.
+```
