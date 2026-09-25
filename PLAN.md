@@ -22,9 +22,48 @@ Working plan for taking the brief (`docs/brief.pdf`) to a working implementation
 | AC7 | "Important" is defined by an explicit, documented, testable rule per event type, not left implicit or to an opaque judgment. | [Ours] |
 | AC8 | At least one event category runs end-to-end from a real, verified data source; other categories may use recorded fixtures. The brief's list is illustrative ("that kind of thing"), not a checklist. | [Ours] |
 | AC9 | AC5 is proven by adding a third, structurally different channel in its own commit. That commit touches only new files plus a registration point, with no edits to alert logic, dispatch, or existing channels. | [Ours] |
-| AC10 | One real-world event produces at most one notification per matching alert (dedup). | [Ours] |
+| AC10 | One source event produces at most one notification per matching alert (dedup). Cross-source clustering is out of scope (see D8). | [Ours] |
 | AC11 | Every delivery attempt is recorded with its status; failures are visible in the admin view. | [Ours] |
 | AC12 | The app runs locally and can be demoed without real Slack or email credentials (local mail catcher, Slack stub or webhook), and events can be injected or replayed on demand. | [Ours] |
+
+## Decisions (Phase 1)
+
+All of these are our decisions, not the brief's. **Provisional** = depends on Phase 2 findings; confirm or revise there.
+
+**Alert model**
+- **D1. Alert** = one category + category-specific filters (disaster: min severity; market: symbol from a supported list + % move; news: keywords) + one or more destinations. Free-text/LLM-interpreted alerts rejected: non-deterministic, conflicts with AC7.
+- **D2. Importance (provisional).** A system baseline per category, which users can raise but not lower. Disasters: the source's own severity signal (magnitude or alert level). Market: % change vs. previous close, system minimum ~2%. News: keyword match within a top-headlines/breaking feed. This is the weakest rule, since news has no objective importance signal.
+- **D3. No geographic filter.** Deferred. Known gap: "near me" not supported.
+- **D4. Real source (provisional).** Disasters use a real feed (likely USGS). Market and news likely use fixtures, depending on free tiers and terms.
+
+**Delivery**
+- **D5.** Immediate delivery only. Digests and quiet hours deferred.
+- **D6.** One alert can fan out to several destinations.
+- **D7.** Destinations (email address, Slack webhook URL) are a separate per-user entity that alerts reference. Channel config stays out of the alert model.
+- **D8. Dedup** by the source's own event ID (market: symbol + trading day + threshold crossed). One notification per event per alert. Cross-source clustering deferred; AC10 reworded to "source event" because of this.
+- **D9. Slack** via incoming webhooks (user-supplied URL, posts to a channel, not a DM). Slack app with OAuth rejected: needs registration and a public redirect URL.
+- **D10. Email** via SMTP, local mail catcher for the demo. Provider swapped by config.
+- **D11. Failures:** retry with backoff up to a limit, then marked failed, shown in the admin view, with manual retry.
+
+**Users and admin**
+- **D12. Auth:** email + password, roles `user` and `admin`, seeded demo accounts. No email verification or password reset.
+- **D13. Admin view:** all users and their alerts (can disable an alert); event feed with each importance verdict and why; delivery log with failures and retry; source health; an "inject test event" tool running through the full pipeline. Out: editing rules in the UI, manual broadcasts, runtime channel toggles.
+
+**Scope**
+- **D14.** "Add more channels later" = code-level interface + registry, not an admin setting.
+- **D15. Third channel (tentative, confirmed in Phase 6):** generic outbound webhook (JSON POST, optional HMAC signature). SMS rejected: needs a provider account, can't be tested offline.
+- **D16.** No LLM in the product for v1.
+- **D17.** Demo scale, local only, polling every few minutes. How it runs is decided in Phase 3.
+
+**Explicit assumptions**
+- **D18. No backfill:** a new alert fires only on events ingested after it's created.
+- **D19.** One event matching two alerts of the same user produces two notifications (one per alert).
+- **D20.** Times stored in UTC, shown in the browser's time zone.
+- **D21.** Notification content: title, category, severity, time, source link, and which alert matched and why.
+
+**Nice-to-have (not built by default)**
+- Users editing, pausing, or deleting their own alerts. Not in the brief and maps to no AC. Consequence: in the core build, a user can't stop their own alert; only an admin can disable it (D13).
+- Self-signup (D12).
 
 ## Phases
 
@@ -38,7 +77,7 @@ Resolve the brief's ambiguities: the alert model, what counts as "important", de
 ### Phase 2: Data source verification spike
 Check the candidate sources (disaster, market, news feeds) by making real requests, not by trusting descriptions.
 - **Produces:** `docs/data-sources.md` (endpoint, auth, rate limits, terms, sample payload, verdict per source) and recorded payloads under `fixtures/`.
-- **Phase check:** every claim about a source (URL, fields, limits, license) is backed by a real response or the provider's own docs. Sources that fail are logged as rejected.
+- **Phase check:** every claim about a source (URL, fields, limits, license) is backed by a real response or the provider's own docs. Sources that fail are logged as rejected. Provisional decisions D2 and D4 are confirmed or revised.
 
 ### Phase 3: Architecture and data model
 Backend stack, domain model (events, alerts, users, channels, deliveries), the channel abstraction, and the ingest → detect → match → dispatch flow.
@@ -51,7 +90,7 @@ Ingestion, normalization, importance rules, matching, dedup, dispatch, delivery 
 - **Phase check:** tests pass, including dedup and channel-failure cases. There is a manual end-to-end run: inject an event, see the email in the mail catcher, see the Slack message or stub call.
 
 ### Phase 5: Angular frontend
-The user UI for creating and managing alerts, and the admin view (scope as decided in Phase 1).
+The user UI for creating alerts and managing destinations, and the admin view (scope per D13).
 - **Produces:** Angular app wired to the backend, and screenshots in `docs/screenshots/`.
 - **Phase check:** the app builds, and the demo flow works in the browser: create an alert → inject an event → the notification arrives → the delivery shows in the admin view.
 

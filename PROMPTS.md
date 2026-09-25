@@ -83,3 +83,26 @@ Good question. The four-file rule was about the process/narrative layer, not all
 ```
 One naming fix before we commit: Phase 6's title still says "R4 validation" - that's leftover from the earlier brief analysis, which used R1–R5. PLAN.md uses AC1–AC12 throughout. Rename it to something like "Phase 6: Third channel (AC5/AC9)" so it's self-consistent without needing the earlier analysis to decode it.
 ```
+
+## 2026-09-25 16:07 +02:00
+**Purpose:** Start Phase 1: propose (not finalize) a decision for each ambiguity in the brief.
+
+```
+Start Phase 1 per PLAN.md. Propose a decision for each ambiguity - don't finalize them, I'll review before we move on.
+```
+
+## 2026-09-25 16:28 +02:00
+**Purpose:** Review of Phase 1 proposals: accept most, move D22 (edit/pause) to nice-to-have, mark D2 and D4 provisional.
+
+```
+Looked through these. The dedup fix and the no-backfill thing both make sense.
+One thing bugs me: D22, letting people edit or pause alerts. It's not in the brief and doesn't map to any AC, and "cheap" isn't really an argument. Just put it on the nice-to-have list instead of building it in by default.
+Rest is fine. Just mark D2 and D4 as provisional for now, since they depend on what Phase 2 actually finds.
+```
+
+## 2026-09-25 16:33 +02:00
+**Purpose:** Commit Phase 1 and start Phase 2 (data source verification).
+
+```
+yes commit and start phase 2
+```

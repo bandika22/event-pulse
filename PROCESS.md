@@ -29,3 +29,10 @@ Entries are added only when a Claude proposal is rejected or modified, a failing
 - **Found:** User clarified the four-file rule covers the process/narrative layer only. Research artifacts (`docs/data-sources.md`, `docs/screenshots/`, `fixtures/`) stay. A separate architecture doc would duplicate the plan.
 - **Decided:** Architecture goes in `PLAN.md`'s Phase 3 section. A separate file only if the design outgrows a short section, and only after Claude explains why and the user agrees.
 - **Why:** Keep design decisions in one place unless the size actually forces a split.
+
+## 2026-09-25 16:28 — Phase 1 review: alert edit/pause moved to nice-to-have
+
+- **Proposed:** Claude's Phase 1 proposals included D22: users can edit, pause, and delete their own alerts, justified as "expected and cheap". They also presented D2 (importance rules) and D4 (which source is real) as regular decisions.
+- **Found:** User rejected D22's inclusion: it isn't in the brief, maps to no AC, and "cheap" isn't a justification. D2 and D4 rest on unverified claims about external sources.
+- **Decided:** Edit/pause/delete moved to a nice-to-have list, not built by default. D2 and D4 marked provisional until Phase 2. Other proposals accepted, including the AC10 rewording and D18 (no backfill).
+- **Why:** Scope is set by the brief and the ACs, not by what's easy to add. Decisions based on unverified facts shouldn't read as settled.
