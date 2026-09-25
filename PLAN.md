@@ -4,7 +4,7 @@ Working plan for taking the brief (`docs/brief.pdf`) to a working implementation
 
 ## Known constraints
 
-- **Frontend: Angular.** Fixed. Not revisited during design.
+- **Frontend: Angular.** Fixed. Not revisited during design. Version 21 (21.2.x): Angular 22 needs Node ≥ 24.15.0 and this machine has 24.14.1 (user's choice in Phase 5).
 - **Timebox: ~24h** (brief). A partial, well-reasoned result beats a complete, undocumented one, so phases are ordered so that stopping early still leaves something coherent.
 
 ## Acceptance criteria
@@ -204,6 +204,18 @@ The user UI for creating alerts and managing destinations, and the admin view (s
 - **Produces:** Angular app wired to the backend, and screenshots in `docs/screenshots/`.
 - **Phase check:** the app builds, and the demo flow works in the browser: create an alert → inject an event → the notification arrives → the delivery shows in the admin view.
 
+#### Result
+
+**Built** (`frontend/`, Angular 21.2, standalone + zoneless + signals, no SSR): login; **My alerts** (destinations list + add form rendered generically from each channel's `configFields`; alerts list + create form with category-specific filters and destination checkboxes); **Admin** (D13) with tabs for the delivery log (status, attempts, last error, per-attempt tooltip, manual retry), event feed (importance verdict + reason, inject test event, replay fixtures), users & alerts (disable/enable), and source health (poll USGS now). Dev proxy `/api` → `:3000`. No user edit/pause/delete (nice-to-have). The native modules' skipped install scripts (`@parcel/watcher`, `lmdb`, `msgpackr-extract`, `esbuild`) are denied explicitly, as in the backend; their binaries come from platform packages.
+
+**Evidence**
+- `npx ng build`: clean, no warnings.
+- Browser check (`docs/screenshots/demo-flow.mjs`, headless Edge via Playwright, fresh DB): 16 checks pass. They cover: anonymous → login redirect; masked webhook URLs; a below-baseline alert rejected with the backend's message; a non-admin can't reach `/admin`; an admin injects an M7.2 quake and a "wildfire" headline, which yield 4 deliveries (3 sent, the `fail-404` hook failed with `HTTP 404: no_service`); the email arrives in Mailpit.
+- Screenshots `docs/screenshots/01`–`08`, reviewed by eye. The event feed shows real USGS quakes with verdicts; the real M5.1–M5.3 events passed the baseline but notified nobody, as expected (the alert needs M ≥ 6 and D18 excludes events seen before the alert existed).
+- **Bug found by the browser run:** route guards called `inject()` after `await`, outside Angular's injection context, so the redirect to `/login` silently failed (landed on `/`). Fixed by resolving services before awaiting. Build and typecheck couldn't catch it.
+
+**Known rough edges:** after creating an alert the filter fields keep their values; the admin notice message persists across tabs; the delivery log refreshes on demand (Refresh button), not live.
+
 ### Phase 6: Third channel (AC5/AC9)
 Add a third channel in its own commit, as the evidence for AC5.
 - **Channel choice:** structurally different from email and Slack (e.g. generic outbound webhook or SMS), with different config, payload, or failure modes. A near-copy of an existing channel would pass without testing whether the abstraction generalizes.
@@ -212,7 +224,7 @@ Add a third channel in its own commit, as the evidence for AC5.
 - **Phase check:** AC9, judged by the actual diff.
 
 ### Phase 7: Wrap-up
-- **Produces:** `README.md` (how to run it, what's real vs. fixture, known gaps), and a short retrospective of what's incomplete and why.
+- **Produces:** the finished `README.md` (a working version with run steps, real vs. synthetic data, and the dev-only credentials caveat exists since Phase 5; add known gaps), and a short retrospective of what's incomplete and why.
 - **Phase check:** a fresh clone runs by following the README alone.
 
 **Cut line if time runs short:** Phases 1–4 and 6 are the core (they prove AC1–AC5 and AC9). Phase 5 can shrink to the minimum UI. AC8's real source can fall back to fixtures, provided that is stated clearly.

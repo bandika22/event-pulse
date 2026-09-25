@@ -151,3 +151,17 @@ hozz már létre git ignore fájlt és ami odatarrtozik tedd már bele
 ```
 undo the last commit  please
 ```
+
+## 2026-09-25 17:35 +02:00
+**Purpose:** Start Phase 5: Angular frontend (alerts, destinations, admin view per D13) with screenshots.
+
+```
+Start Phase 5 per PLAN.md: the Angular frontend for creating alerts and managing destinations, plus the admin view (scope per D13). Take screenshots into docs/screenshots/.
+```
+
+## 2026-09-25 17:59 +02:00
+**Purpose:** Mark the login page's demo credentials as dev-only and confirm they're documented in the README.
+
+```
+The login page shows demo credentials directly - that's fine for a local demo, but should it also say explicitly that this is dev-only and wouldn't ship this way in production? Also confirm these are documented in README too, not just on the page.
+```

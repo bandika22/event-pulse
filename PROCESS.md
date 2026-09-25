@@ -57,3 +57,17 @@ Entries are added only when a Claude proposal is rejected or modified, a failing
 - **Found:** (1) One row per delivery keeps only the latest attempt, but AC11 says *every* attempt is recorded. (2) npm 11 blocked `better-sqlite3`'s install script (`node-gyp rebuild`) yet the module loaded anyway. Inspection showed v13 ships prebuilt binaries inside the package, so the script isn't how the binary arrives. (3) The dedup code uses `INSERT OR IGNORE` and checks `changes`, so the unique-violation error code is never used; that part of the 17:01 rationale doesn't hold.
 - **Decided:** Added a `delivery_attempts` table (tested; visible per delivery in the admin API). Denied both blocked install scripts explicitly in `backend/package.json` so clones never attempt a native build. The `better-sqlite3` choice stands on stability alone.
 - **Why:** The schema gap would have failed AC11 silently. The install behaviour would have differed across machines if left to npm's defaults.
+
+## 2026-09-25 17:51 — Phase 5: Angular version and a guard bug
+
+- **Proposed:** Claude started scaffolding with the current Angular CLI (22.2.0), assuming it runs on the machine's Node. Claude's first route guards called `inject(Router)` after `await auth.load()`.
+- **Found:** Angular CLI 22.x (all releases) requires Node ≥ 24.15.0; the machine has 24.14.1, and the CLI exits. Angular 21.2.24 supports it. Separately, the first browser run of the demo flow failed: visiting `/alerts` logged out landed on `/` instead of `/login`, because `inject()` after `await` is outside the injection context and throws inside the guard. The build and type checks passed with the bug.
+- **Decided:** User chose Angular 21 over upgrading Node (recorded in `PLAN.md` Known constraints). Guards now resolve `Auth` and `Router` before awaiting; the browser check passes.
+- **Why:** Upgrading Node would change the user's machine for a one-major-version gain. The guard bug shows why Phase 5's check runs the flow in a real browser, not just the build.
+
+## 2026-09-25 17:59 — Demo credentials: dev-only note and a README that didn't exist
+
+- **Proposed:** Claude's login page listed the demo credentials with no caveat. Claude's code referred readers to a README for them (`backend/src/seed.ts` comment; the startup log line "created demo users (see README)").
+- **Found:** User asked for an explicit dev-only statement and for confirmation that the credentials are in the README. No root README existed (it was planned for Phase 7), so both references pointed to nothing. Nothing in the code prevents seeding or showing the accounts in a production build either.
+- **Decided:** The login page now says "Local development only" and points to the README, without claiming production behaviour the code doesn't enforce. A working root `README.md` documents the accounts and lists what must change before any real deployment (no seeding, no credentials on the page, a real `SESSION_SECRET`, HTTPS + `secure` cookie, Slack prefix allowlist). Each item was checked against the code. Phase 7 extends this README rather than creating it.
+- **Why:** A pointer to documentation that doesn't exist is a quiet false claim. The page text should describe what's true of the code, not what a production setup would ideally do.
