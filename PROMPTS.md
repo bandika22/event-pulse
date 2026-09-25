@@ -51,3 +51,35 @@ Add two more rules to CLAUDE.md:
 1. Angular is a fixed constraint for the frontend - not an open architectural decision to revisit during design. State it as a known constraint.
 2. Default workflow is committing directly to main with frequent, meaningful commits. Only use a separate branch when deliberately trying an approach we already suspect we'll reject - name it clearly (e.g. experiment/...) and note its existence and reason in PROCESS.md.
 ```
+
+## 2026-09-25 15:16 +02:00
+**Purpose:** Write PLAN.md with phases, outputs, continuous AI-output validation, labeled acceptance criteria, and known constraints.
+
+```
+Write PLAN.md: phases, what each phase produces, and how we validate AI output -as a continuous check after each phase, not a separate step at the end (per the brief: "As you go, critically assess what the AI produces"). Where we define acceptance criteria, distinguish criteria that come directly from the brief's wording from criteria that reflect our own design decisions about how to operationalize something the brief only states loosely - label each one accordingly. Add a short "Known constraints" section (Angular for the frontend). Keep it concise - this is a working plan, not a design document.
+```
+
+## 2026-09-25 15:20 +02:00
+**Purpose:** Reject a separate product-decisions file (PLAN.md holds them) and verify Phase 6 captures both agreed R4 details.
+
+```
+Before I commit, two things:
+
+1. On the PROCESS.md scope question — don't create a separate file for product decisions. PLAN.md already holds those (the ACs, phases, cut line). PROCESS.md stays scoped to what it already is: AI proposals that got rejected or modified, failed tests, corrected assumptions. Keep the current four-file set as is.
+
+2. Does Phase 6's third-channel test capture both details we agreed on: (a) measuring the diff, where only new files plus a registration line should be needed and any change to core alert/dispatch/existing-channel code is a logged finding, and (b) picking a structurally different channel (e.g. webhook or SMS), not a near-copy of email/Slack? If not, add them to PLAN.md
+```
+
+## 2026-09-25 15:28 +02:00
+**Purpose:** Clarify the four-file rule covers only process docs; keep research artifacts, fold architecture into PLAN.md Phase 3 unless too complex.
+
+```
+Good question. The four-file rule was about the process/narrative layer, not all documentation. Keep docs/data-sources.md (Phase 2's actual research output) and docs/screenshots/ and fixtures/ - those are real artifacts, not decision-log duplication. For docs/architecture.md: fold it into PLAN.md's Phase 3 section instead, unless the design turns out complex enough that a short PLAN.md section can't hold it - in that case tell me why before splitting it out, rather than creating it by default.
+```
+
+## 2026-09-25 15:33 +02:00
+**Purpose:** Rename Phase 6 to use PLAN.md's AC numbering instead of the old R-numbering.
+
+```
+One naming fix before we commit: Phase 6's title still says "R4 validation" - that's leftover from the earlier brief analysis, which used R1–R5. PLAN.md uses AC1–AC12 throughout. Rename it to something like "Phase 6: Third channel (AC5/AC9)" so it's self-consistent without needing the earlier analysis to decode it.
+```
